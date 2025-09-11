@@ -5,37 +5,42 @@ find_recent(){
 }
 
 auto_format(){
-  [ -f .clang-format ] || { echo "Error: .clang-format file not found in current directory"; return 1; }
-  EXE_CLANG_FORMAT=/usr/bin/clang-format-20
-  command -v "$EXE_CLANG_FORMAT" >/dev/null 2>&1 || { echo "Error: clang-format is not installed"; return 1; }
-  [ $# -gt 0 ] || { echo "Usage: auto_format dir1 dir2 ..."; return 1; }
-  NPROC=$(nproc 2>/dev/null || echo 1)
-  echo "Using $NPROC threads for parallel formatting"
-  echo "Using .clang-format from: $(pwd)"
-  dirs=()
-  for d in "$@"; do
-    if [ -d "$d" ]; then dirs+=("$d"); else echo "Warning: Directory '$d' does not exist, skipping..."; fi
-  done
-  [ "${#dirs[@]}" -gt 0 ] || { echo "No directories to scan"; return 0; }
-  find_cmd=(find "${dirs[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' -o -name '*.cc' -o -name '*.cxx' -o -name '*.hxx' -o -name '*.tpp' -o -name '*.ipp' \) -print0)
-  mapfile -d '' -t files < <("${find_cmd[@]}")
-  file_count=${#files[@]}
-  if [ "$file_count" -eq 0 ]; then echo "No C/C++ files found in the specified directories"; return 0; fi
-  echo "Found $file_count files to format"
-  if command -v parallel >/dev/null 2>&1; then
-    printf '%s\0' "${files[@]}" | parallel -0 -j "$NPROC" --bar "$EXE_CLANG_FORMAT" -i -style=file {}
-  else
-    printf '%s\0' "${files[@]}" | xargs -0 -n1 -P "$NPROC" sh -c '"$0" -i -style=file "$1"' "$EXE_CLANG_FORMAT"
-  fi
-  echo "✓ Formatting complete!"
-  return 0
+	[ -f .clang-format ] || { echo "Error: .clang-format file not found in current directory"; return 1; }
+	EXE_CLANG_FORMAT=/usr/bin/clang-format-20
+	command -v "$EXE_CLANG_FORMAT" >/dev/null 2>&1 || { echo "Error: clang-format is not installed"; return 1; }
+	[ $# -gt 0 ] || { echo "Usage: auto_format dir1 dir2 ..."; return 1; }
+	NPROC=$(nproc 2>/dev/null || echo 1)
+	echo "Using $NPROC threads for parallel formatting"
+	echo "Using .clang-format from: $(pwd)"
+	dirs=()
+	for d in "$@"; do
+		if [ -d "$d" ]; then dirs+=("$d"); else echo "Warning: Directory '$d' does not exist, skipping..."; fi
+	done
+	[ "${#dirs[@]}" -gt 0 ] || { echo "No directories to scan"; return 0; }
+	find_cmd=(find "${dirs[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' -o -name '*.cc' -o -name '*.cxx' -o -name '*.hxx' -o -name '*.tpp' -o -name '*.ipp' \) -print0)
+	mapfile -d '' -t files < <("${find_cmd[@]}")
+	file_count=${#files[@]}
+	if [ "$file_count" -eq 0 ]; then echo "No C/C++ files found in the specified directories"; return 0; fi
+	echo "Found $file_count files to format"
+	if command -v parallel >/dev/null 2>&1; then
+		printf '%s\0' "${files[@]}" | parallel -0 -j "$NPROC" --bar "$EXE_CLANG_FORMAT" -i -style=file {}
+	else
+		printf '%s\0' "${files[@]}" | xargs -0 -n1 -P "$NPROC" sh -c '"$0" -i -style=file "$1"' "$EXE_CLANG_FORMAT"
+	fi
+	echo "✓ Formatting complete!"
+	return 0
 }
 
-grep -qi microsoft /proc/version 2>/dev/null || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null || exit 0
-dest="/run/user/$(id -u)/"
-for src in /mnt/wslg/runtime-dir/wayland-0*; do
-  [ -e "$src" ] || continue
-  link="$dest$(basename "$src")"
-  [ -e "$link" ] && continue
-  ln -s "$src" "$link"
-done
+link_wayland_sockets(){
+	grep -qi microsoft /proc/version 2>/dev/null || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null || return 0
+	dest="/run/user/$(id -u)/"
+	for src in /mnt/wslg/runtime-dir/wayland-0*; do
+		[ -e "$src" ] || continue
+		link="$dest$(basename "$src")"
+		[ -e "$link" ] && continue
+		ln -s "$src" "$link"
+	done
+	return 0
+}
+
+link_wayland_sockets
