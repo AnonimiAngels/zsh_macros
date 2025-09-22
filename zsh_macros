@@ -6,7 +6,7 @@ find_recent(){
 
 auto_format(){
 	[ -f .clang-format ] || { echo "Error: .clang-format file not found in current directory"; return 1; }
-	EXE_CLANG_FORMAT=/usr/bin/clang-format-20
+	EXE_CLANG_FORMAT=/usr/bin/clang-format
 	command -v "$EXE_CLANG_FORMAT" >/dev/null 2>&1 || { echo "Error: clang-format is not installed"; return 1; }
 	[ $# -gt 0 ] || { echo "Usage: auto_format dir1 dir2 ..."; return 1; }
 	NPROC=$(nproc 2>/dev/null || echo 1)
@@ -44,3 +44,6 @@ link_wayland_sockets(){
 }
 
 link_wayland_sockets
+
+calc() { python3 -c "from math import *; print($*);" }
+alias calc='noglob calc'
