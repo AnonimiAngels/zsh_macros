@@ -45,5 +45,7 @@ link_wayland_sockets(){
 
 link_wayland_sockets
 
-calc() { python3 -c "from math import *; print($*);" }
-alias calc='noglob calc'
+calc_impl(){
+	python3 -c "from math import *; print($*);"
+}
+alias calc='noglob calc_impl'
