@@ -1,7 +1,7 @@
 #!/usr/bin/env -S zsh -f
 
 find_recent(){
-  find "$1" -maxdepth 3 -type f -name "$2" -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
+	find "$1" -maxdepth 3 -type f -name "$2" -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
 }
 
 auto_format(){
@@ -18,7 +18,10 @@ auto_format(){
 	done
 	[ "${#dirs[@]}" -gt 0 ] || { echo "No directories to scan"; return 0; }
 	find_cmd=(find "${dirs[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' -o -name '*.cc' -o -name '*.cxx' -o -name '*.hxx' -o -name '*.tpp' -o -name '*.ipp' \) -print0)
-	mapfile -d '' -t files < <("${find_cmd[@]}")
+	files=()
+	while IFS= read -r -d '' file; do
+		files+=("$file")
+	done < <("${find_cmd[@]}")
 	file_count=${#files[@]}
 	if [ "$file_count" -eq 0 ]; then echo "No C/C++ files found in the specified directories"; return 0; fi
 	echo "Found $file_count files to format"
